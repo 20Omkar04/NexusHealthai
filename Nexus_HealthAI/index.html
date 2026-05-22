@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthAI Nexus — Clinical Intelligence Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg">
+  <div class="bg-grad"></div>
+  <div class="bg-grid"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+</div>
+
+<div class="app">
+
+  <!-- ── HEADER ── -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-mark">H+</div>
+      <div>
+        <div class="logo-name">HealthAI Nexus</div>
+        <div class="logo-sub">Clinical Intelligence · HIPAA-aware</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-badge"><span class="pulse"></span>SYSTEM READY</div>
+    </div>
+  </div>
+
+  <!-- ── API KEY BANNER ── -->
+  <div class="api-banner">
+    <span class="api-banner-label">🔑 API Keys (to scale in future we would use supabase route)</span>
+    <div class="api-key-group">
+      <span style="font-size:11px;color:var(--text3);white-space:nowrap">Gemini 2.5 Flash</span>
+      <input type="password" class="api-key-input" id="geminiKey" placeholder="AIza..." oninput="onKeyInput('gemini')">
+      <span class="api-status" id="geminiStatus">not set</span>
+    </div>
+    <div class="sep"></div>
+    <div class="api-key-group">
+      <span style="font-size:11px;color:var(--text3);white-space:nowrap">Groq</span>
+      <input type="password" class="api-key-input" id="groqKey" placeholder="Groq API key (free at console.groq.com)" oninput="onKeyInput('groq')">
+      <span class="api-status" id="groqStatus">not set</span>
+    </div>
+    <div class="sep"></div>
+    <div class="api-key-group">
+      <span style="font-size:11px;color:var(--text3);white-space:nowrap">OpenRouter</span>
+      <input type="password" class="api-key-input" id="openrouterKey" placeholder="sk-or-..." oninput="onKeyInput('openrouter')">
+      <span class="api-status" id="openrouterStatus">not set</span>
+    </div>
+    <div class="sep"></div>
+    <div class="api-key-group">
+      <span style="font-size:11px;color:var(--text3);white-space:nowrap">HF Backup</span>
+      <input type="password" class="api-key-input" id="hfKey" placeholder="hf_..." oninput="onKeyInput('hf')">
+      <span class="api-status" id="hfStatus">not set</span>
+    </div>
+</div>
+
+
+  <!-- ── NAV ── -->
+  <div class="nav">
+    <button class="nav-tab active" onclick="showTab('dashboard', this)">
+      <span class="tab-icon">📊</span> Patient Dashboard <span class="tab-pip"></span>
+    </button>
+    <button class="nav-tab" onclick="showTab('phishing', this)">
+      <span class="tab-icon">🎣</span> Phishing Simulation <span class="tab-pip"></span>
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       PANEL 1 — PATIENT DASHBOARD
+       ════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-dashboard">
+
+    <div class="alert alert-amber">
+      <span class="alert-icon">⚠</span>
+      <span>HIPAA Notice: All analysis is informational and non-diagnostic. De-identify all data before submission — remove names, DOB, MRN, and all 18 Safe Harbor identifiers.</span>
+    </div>
+
+    <!-- Input Card -->
+    <div class="card gap-18">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div class="section-label">Data Input</div>
+          <div class="section-title" style="font-size:17px">Monthly Health Metrics</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" id="modeManual" onclick="setInputMode('manual')" style="border-color:var(--cyan);color:var(--cyan)">✏️ Manual Entry</button>
+          <button class="btn btn-ghost btn-sm" id="modeCSV"   onclick="setInputMode('csv')">📂 Upload CSV</button>
+        </div>
+      </div>
+
+      <!-- Manual Entry -->
+      <div id="input-manual">
+        <div class="form-grid-3">
+          <div class="field">
+            <label>Month</label>
+            <select id="in-month">
+              <option>January</option><option>February</option><option>March</option><option>April</option>
+              <option>May</option><option>June</option><option>July</option><option>August</option>
+              <option>September</option><option selected>October</option><option>November</option><option>December</option>
+            </select>
+          </div>
+          <div class="field"><label>Heart Rate (bpm)</label><input type="number" id="in-hr"    placeholder="72"  min="40"  max="200"></div>
+          <div class="field"><label>Sleep (hrs)</label>     <input type="number" id="in-sleep" placeholder="7.0" min="0"   max="24"  step="0.5"></div>
+        </div>
+        <div class="form-grid-3">
+          <div class="field"><label>Activity Score (0–100)</label><input type="number" id="in-act"    placeholder="68" min="0" max="100"></div>
+          <div class="field"><label>SpO2 (%)</label>              <input type="number" id="in-spo2"   placeholder="98" min="80" max="100"></div>
+          <div class="field"><label>Stress Index (0–100)</label>  <input type="number" id="in-stress" placeholder="42" min="0" max="100"></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="addManualEntry()">+ Add Month</button>
+          <button class="btn btn-ghost"   onclick="loadSampleData()">Load Sample Data</button>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--text3)" id="entry-count">0 months entered</span>
+        </div>
+      </div>
+
+      <!-- CSV Upload -->
+      <div id="input-csv" style="display:none">
+        <div class="upload-zone" id="csvDropZone"
+          ondragover="event.preventDefault(); this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="handleCSVDrop(event)">
+          <input type="file" id="csvFile" accept=".csv" onchange="handleCSVFile()">
+          <div class="upload-icon">📋</div>
+          <div class="upload-title">Drop your CSV or click to browse</div>
+          <div class="upload-sub">Monthly health export — beginning or end of month</div>
+          <div class="upload-types">
+            <span class="type-pill">CSV</span>
+            <span class="type-pill">month, heartRate, sleepHours, activityScore, spo2, stressIndex</span>
+          </div>
+          <div class="upload-success" id="csvSuccess"></div>
+        </div>
+        <div class="alert alert-cyan" style="margin-top:12px">
+          <span class="alert-icon">💡</span>
+          <span>Flexible column names accepted. Max 5,000 chars parsed to limit token usage.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="grid-3">
+      <div class="card card-sm card-accent-rose">
+        <div class="stat-label">Heart Rate (latest)</div>
+        <div class="stat-value" id="stat-hr">—<span> bpm</span></div>
+        <div class="stat-delta delta-flat" id="delta-hr">no data yet</div>
+      </div>
+      <div class="card card-sm card-accent-violet">
+        <div class="stat-label">Sleep Quality (latest)</div>
+        <div class="stat-value" id="stat-sleep">—<span> hrs</span></div>
+        <div class="stat-delta delta-flat" id="delta-sleep">no data yet</div>
+      </div>
+      <div class="card card-sm card-accent-cyan">
+        <div class="stat-label">Activity Score (latest)</div>
+        <div class="stat-value" id="stat-act">—<span>/100</span></div>
+        <div class="stat-delta delta-flat" id="delta-act">no data yet</div>
+      </div>
+    </div>
+
+    <!-- Chart + Risk Bars -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-label">Trend Visualization</div>
+        <div class="chart-wrap"><canvas id="healthChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-label">Risk Indicators</div>
+        <div id="risk-bars" style="margin-top:10px">
+          <div class="risk-bar">
+            <div class="risk-row"><span class="risk-name">Cardiovascular</span><span class="risk-val" id="rv-cardio">—</span></div>
+            <div class="bar-track"><div class="bar-fill" id="rb-cardio" style="width:0%"></div></div>
+          </div>
+          <div class="risk-bar">
+            <div class="risk-row"><span class="risk-name">Sleep Deficit</span><span class="risk-val" id="rv-sleep">—</span></div>
+            <div class="bar-track"><div class="bar-fill" id="rb-sleep" style="width:0%"></div></div>
+          </div>
+          <div class="risk-bar">
+            <div class="risk-row"><span class="risk-name">Sedentary Risk</span><span class="risk-val" id="rv-sedentary">—</span></div>
+            <div class="bar-track"><div class="bar-fill" id="rb-sedentary" style="width:0%"></div></div>
+          </div>
+          <div class="risk-bar">
+            <div class="risk-row"><span class="risk-name">Stress Proxy</span><span class="risk-val" id="rv-stress">—</span></div>
+            <div class="bar-track"><div class="bar-fill" id="rb-stress" style="width:0%"></div></div>
+          </div>
+          <div class="risk-bar">
+            <div class="risk-row"><span class="risk-name">SpO2 Concern</span><span class="risk-val" id="rv-spo2">—</span></div>
+            <div class="bar-track"><div class="bar-fill" id="rb-spo2" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <button class="btn btn-primary btn-full" id="analyzeBtn" onclick="analyzeHealth()" disabled>
+          ⚡ Analyze with AI
+        </button>
+        <div class="loader" id="healthLoader"><div class="loader-ring"></div><span>Analyzing health trends…</span></div>
+      </div>
+    </div>
+
+    <!-- AI Insight -->
+    <div class="ai-box" id="healthInsight" style="display:none">
+      <div class="ai-box-label" id="insightModel">AI Health Insight</div>
+      <div class="ai-box-text" id="insightText"></div>
+    </div>
+
+  </div><!-- /panel-dashboard -->
+
+
+  <!-- ════════════════════════════════════════════
+       PANEL 2 — PHISHING SIMULATION
+       ════════════════════════════════════════════ -->
+  <div class="panel" id="panel-phishing">
+
+    <!-- Setup Screen -->
+    <div id="phish-setup">
+      <div class="alert alert-cyan">
+        <span class="alert-icon">🛡</span>
+        <span>Security Awareness Training — Read each email, then decide: phishing or legitimate? Your score is revealed at the end.</span>
+      </div>
+
+      <div class="grid-2 gap-18">
+        <div class="card">
+          <div class="section-label">Simulation Config</div>
+          <div class="section-title" style="font-size:17px;margin-bottom:16px">Configure Your Session</div>
+          <div class="form-grid-2">
+            <div class="field">
+              <label>Target Role</label>
+              <select id="phish-role">
+                <option value="patient">Patient (General)</option>
+                <option value="administrator">Hospital Administrator</option>
+                <option value="clinician">Clinical Staff</option>
+                <option value="insurance">Insurance Claimant</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Difficulty</label>
+              <select id="phish-difficulty">
+                <option value="basic">Basic — Obvious red flags</option>
+                <option value="intermediate" selected>Intermediate — Mixed</option>
+                <option value="advanced">Advanced — Very subtle</option>
+              </select>
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:14px">
+            <label>Number of Emails</label>
+            <select id="phish-count">
+              <option value="3">3 emails (quick)</option>
+              <option value="5" selected>5 emails (standard)</option>
+              <option value="8">8 emails (thorough)</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-full" id="startPhishBtn" onclick="startPhishingSession()" disabled>
+            🎣 Start Simulation
+          </button>
+          <div class="loader" id="phishLoader"><div class="loader-ring"></div><span>Generating email scenarios…</span></div>
+        </div>
+
+        <div class="card card-accent-violet">
+          <div class="section-label">How It Works</div>
+          <div class="section-title" style="font-size:17px;margin-bottom:14px">Training Protocol</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <div style="width:26px;height:26px;border-radius:50%;background:rgba(129,140,248,0.2);border:1px solid rgba(129,140,248,0.3);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--violet);flex-shrink:0">1</div>
+              <div style="font-size:13px;color:var(--text2);line-height:1.5"><strong style="color:var(--text)">Read the email</strong> — examine sender, subject, tone, links, and any requests.</div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <div style="width:26px;height:26px;border-radius:50%;background:rgba(129,140,248,0.2);border:1px solid rgba(129,140,248,0.3);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--violet);flex-shrink:0">2</div>
+              <div style="font-size:13px;color:var(--text2);line-height:1.5"><strong style="color:var(--text)">Make your call</strong> — Phishing or Legitimate. Red flags revealed after each answer.</div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <div style="width:26px;height:26px;border-radius:50%;background:rgba(129,140,248,0.2);border:1px solid rgba(129,140,248,0.3);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--violet);flex-shrink:0">3</div>
+              <div style="font-size:13px;color:var(--text2);line-height:1.5"><strong style="color:var(--text)">Get your score</strong> — AI-graded report with personalized security tips at the end.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /phish-setup -->
+
+    <!-- Active Quiz -->
+    <div id="phish-quiz" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="round-pills"></div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text3)" id="quiz-progress">Email 1 of 5</div>
+      </div>
+
+      <div class="grid-2-1" style="align-items:start">
+
+        <!-- Left: email + controls -->
+        <div>
+          <div class="email-frame">
+            <div class="email-chrome">
+              <div class="chrome-dot" style="background:#ff5f56"></div>
+              <div class="chrome-dot" style="background:#ffbd2e"></div>
+              <div class="chrome-dot" style="background:#27c93f"></div>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:10px">INBOX — TRAINING SIMULATION</span>
+            </div>
+            <div class="email-meta" id="email-meta">From: <span id="email-from">—</span> &nbsp;|&nbsp; To: you@hospital.org</div>
+            <div class="email-subject" id="email-subject">—</div>
+            <div class="email-body" id="email-body">—</div>
+          </div>
+
+          <div class="quiz-choice">
+            <button class="quiz-btn phish" onclick="submitAnswer(false)">🎣 Phishing</button>
+            <button class="quiz-btn safe"  onclick="submitAnswer(true)">✅ Legitimate</button>
+          </div>
+
+          <div class="feedback-banner" id="feedback-banner"></div>
+
+          <div class="result-reveal" id="flags-reveal" style="margin-top:14px">
+            <div class="section-label" style="margin-bottom:8px">Analysis</div>
+            <div id="flags-list"></div>
+            <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="nextEmail()" id="nextBtn">Next Email →</button>
+          </div>
+        </div>
+
+        <!-- Right: score + tips -->
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card card-sm">
+            <div class="section-label" style="margin-bottom:12px">Live Score</div>
+            <div class="score-ring-wrap">
+              <svg width="110" height="110" viewBox="0 0 110 110">
+                <circle cx="55" cy="55" r="44" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="9"/>
+                <circle id="scoreArc" cx="55" cy="55" r="44" fill="none" stroke="var(--cyan)" stroke-width="9"
+                  stroke-linecap="round" stroke-dasharray="276" stroke-dashoffset="276"
+                  transform="rotate(-90 55 55)" style="transition:stroke-dashoffset 0.6s ease,stroke 0.3s"/>
+              </svg>
+              <div class="score-ring-val">
+                <div id="scoreVal">0%</div>
+                <div class="score-ring-sub">ACCURACY</div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:center;gap:16px;margin-top:14px">
+              <div style="text-align:center">
+                <div style="font-size:22px;font-weight:700;color:var(--green)" id="correctCount">0</div>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--text3)">CORRECT</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-size:22px;font-weight:700;color:var(--rose)" id="wrongCount">0</div>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--text3)">MISSED</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card card-sm">
+            <div class="section-label" style="margin-bottom:10px">Detection Tips</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--text2);line-height:1.5">
+              <div>🔍 <strong style="color:var(--text)">Sender domain</strong> — does it match the real org exactly?</div>
+              <div>⏱ <strong style="color:var(--text)">Urgency</strong> — "act within 24hrs" pressure is a classic tactic</div>
+              <div>🔗 <strong style="color:var(--text)">Links</strong> — hover to reveal real destination before clicking</div>
+              <div>🔐 <strong style="color:var(--text)">Credentials</strong> — legitimate orgs never ask for passwords via email</div>
+              <div>📋 <strong style="color:var(--text)">Personal info</strong> — SSN/DOB requests in email = always phishing</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /phish-quiz -->
+
+    <!-- Final Score -->
+    <div class="score-panel" id="phish-result">
+      <div class="card" style="text-align:center;padding:40px 32px">
+        <div class="section-label" style="margin-bottom:12px">Session Complete</div>
+        <div class="section-title" style="font-size:28px;margin-bottom:4px" id="result-title">Your Security Score</div>
+        <div style="font-size:48px;font-weight:800;margin:20px 0;letter-spacing:-0.04em" id="result-score">—</div>
+        <div style="font-size:14px;color:var(--text2);margin-bottom:28px" id="result-sub">—</div>
+        <div id="result-pills" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:24px"></div>
+        <div class="ai-box" id="result-ai-box" style="text-align:left;margin-bottom:24px;display:none">
+          <div class="ai-box-label">AI Security Grader</div>
+          <div class="ai-box-text" id="result-ai-text"></div>
+        </div>
+        <div class="loader" id="resultLoader" style="justify-content:center"><div class="loader-ring"></div><span>Generating your security report…</span></div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:12px">
+          <button class="btn btn-ghost"   onclick="resetPhishing()">↺ New Session</button>
+          <button class="btn btn-primary" id="gradeBtn" onclick="gradeSession()">🤖 Get AI Report</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panel-phishing -->
+
+</div><!-- /app -->
+
+<div class="toast" id="toast"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
