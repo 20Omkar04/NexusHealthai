@@ -1,6 +1,6 @@
 # HealthAI Nexus 🏥⚡
 
-> A HIPAA-aware clinical intelligence platform built for hackathons.  
+> A HIPAA-aware clinical intelligence platform built for social good.  
 > Two tools, zero backend, one file to open.
 
 ---
